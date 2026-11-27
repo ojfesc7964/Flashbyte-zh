@@ -3,9 +3,7 @@ import 'dart:io';
 
 import 'package:fast_file_picker/fast_file_picker.dart';
 import 'package:flashbyte/l10n/app_localizations.dart';
-import 'package:flashbyte/models/shared_files.dart';
 import 'package:flashbyte/services/security/trusted_devices_service.dart';
-import 'package:flashbyte/services/sharing/incoming_share_service.dart';
 import 'package:flashbyte/services/platform/android_document_service.dart';
 import 'package:flashbyte/services/platform/android_saf_service.dart';
 import 'package:flashbyte/services/transfer/socket_service.dart';
@@ -79,23 +77,11 @@ class _TcpChatPageState extends State<TcpChatPage> {
   Map<String, dynamic>? _peerInfo;
 
   StreamSubscription? _streamSubscription;
-  StreamSubscription<SharedFiles>? _sharedFilesSubscription;
 
   @override
   void initState() {
     super.initState();
     _peerInfo = SocketService.instance.connectedPeerInfo;
-
-    _sharedFilesSubscription = IncomingShareService.instance.sharedFilesStream
-        .listen(_handleSharedBatch);
-    IncomingShareService.instance.sessionActive = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final deferred = IncomingShareService.instance.takeDeferredForSession();
-      if (deferred != null) {
-        _handleSharedBatch(deferred);
-      }
-    });
 
     if (widget.initialBatchFiles != null &&
         widget.initialBatchFiles!.isNotEmpty) {
@@ -336,11 +322,9 @@ class _TcpChatPageState extends State<TcpChatPage> {
 
   @override
   void dispose() {
-    IncomingShareService.instance.sessionActive = false;
     _resumeTimer?.cancel();
     _resumeTimer = null;
     _streamSubscription?.cancel();
-    _sharedFilesSubscription?.cancel();
     for (final notifier in _transferProgress.values) {
       notifier.dispose();
     }
@@ -1010,53 +994,6 @@ class _TcpChatPageState extends State<TcpChatPage> {
     );
   }
 
-  /// 会话页打开期间收到的分享：直接发给当前设备。
-  void _handleSharedBatch(SharedFiles batch) {
-    if (!mounted || batch.isEmpty) {
-      return;
-    }
-    if (isDisconnected.value) {
-      showScaffoldSnackbar(
-        AppLocalizations.of(context).couldNotSendSharedFiles,
-      );
-      return;
-    }
-    final locations = <String>[];
-    for (final file in batch.files) {
-      final location = _pickedFileLocation(file);
-      if (location != null) locations.add(location);
-    }
-    if (locations.isEmpty) {
-      showScaffoldSnackbar(
-        AppLocalizations.of(context).couldNotReadSelectedFile,
-      );
-      return;
-    }
-    final l10n = AppLocalizations.of(context);
-    final clipboardLocations = locations
-        .where(batch.clipboardPaths.contains)
-        .toSet();
-    if (clipboardLocations.isEmpty) {
-      _sendLocations(locations);
-    } else {
-      // 分享的文本/链接按粘贴板发送，与应用内粘贴板按钮一致。
-      for (final location in locations) {
-        final isClipboard = clipboardLocations.contains(location);
-        SocketService.instance.sendFile(
-          location,
-          clipboard: isClipboard,
-          displayName: isClipboard ? l10n.clipboardFileName : null,
-        );
-      }
-    }
-    final peerName = _peerName(context);
-    showScaffoldSnackbar(
-      batch.files.length == 1
-          ? l10n.sendingSharedFileTo(peerName)
-          : l10n.sendingNSharedFilesTo(batch.files.length, peerName),
-    );
-  }
-
   void _sendInitialFiles() {
     if (_sentInitialFiles || widget.initialFiles.isEmpty) {
       return;
@@ -1069,13 +1006,6 @@ class _TcpChatPageState extends State<TcpChatPage> {
       if (location != null) locations.add(location);
     }
     _sendLocations(locations);
-  }
-
-  String _peerName(BuildContext context) {
-    final name = _peerInfo?['name'] as String?;
-    return (name == null || name.isEmpty)
-        ? AppLocalizations.of(context).peer
-        : name;
   }
 
   /// 选择器返回的路径转换成传输层可用的位置：Android 用 SAF 的 content://，其余用文件路径。
