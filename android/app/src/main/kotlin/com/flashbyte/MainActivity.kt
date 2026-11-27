@@ -11,14 +11,11 @@ import android.provider.OpenableColumns
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.net.NetworkInterface
 
 class MainActivity : FlutterActivity() {
     private var pickDocumentsResult: MethodChannel.Result? = null
-    private var sharedFilesSink: EventChannel.EventSink? = null
-    private var initialShareConsumed = false
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -51,7 +48,7 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        // 文档选择与分享：只把 content:// URI 交给 Dart 侧，由传输层流式读取，
+        // 文档选择：只把 content:// URI 交给 Dart 侧，由传输层流式读取，
         // 不复制文件内容，因此文件多大都能选、都能收。
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -59,9 +56,6 @@ class MainActivity : FlutterActivity() {
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "pickDocuments" -> pickDocuments(result)
-                "takeInitialSharedFiles" -> result.success(
-                    takeInitialSharedFiles()
-                )
                 "statUri" -> {
                     val uri = call.argument<String>("uri")
                     result.success(uri?.let { statContentUri(it) })
@@ -69,19 +63,6 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
-
-        EventChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
-            "flashbyte/documents/shared"
-        ).setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                sharedFilesSink = events
-            }
-
-            override fun onCancel(arguments: Any?) {
-                sharedFilesSink = null
-            }
-        })
 
         // 传输期间的前台服务启停：Dart 侧在文件开始传输时调用 start，
         // 传输结束或连接断开时调用 stop。
@@ -205,105 +186,22 @@ class MainActivity : FlutterActivity() {
         result.success(describeUris(uris))
     }
 
-    /** 首次启动时把“分享到 Flashbyte”带进来的文件交给 Dart 侧，只交一次。 */
-    private fun takeInitialSharedFiles(): List<Map<String, Any?>> {
-        if (initialShareConsumed) {
-            return emptyList()
-        }
-        initialShareConsumed = true
-        return sharedUrisFrom(intent)
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val uris = sharedUrisFrom(intent)
-        if (uris.isNotEmpty()) {
-            sharedFilesSink?.success(uris)
-        }
-    }
-
-    private fun sharedUrisFrom(intent: Intent?): List<Map<String, Any?>> {
-        if (intent == null) {
-            return emptyList()
-        }
-        val action = intent.action ?: return emptyList()
-        if (action != Intent.ACTION_SEND && action != Intent.ACTION_SEND_MULTIPLE) {
-            return emptyList()
-        }
-
-        val uris = linkedSetOf<Uri>()
-        if (action == Intent.ACTION_SEND) {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { uris.add(it) }
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let {
-                uris.addAll(it)
-            }
-        }
-        // 有些应用只把 URI 放进 ClipData，不写 EXTRA_STREAM。
-        intent.clipData?.let { clip ->
-            for (index in 0 until clip.itemCount) {
-                clip.getItemAt(index)?.uri?.let { uris.add(it) }
-            }
-        }
-        intent.removeExtra(Intent.EXTRA_STREAM)
-
-        if (uris.isEmpty()) {
-            // 纯文本/链接分享：交给 Dart 侧按粘贴板内容处理。
-            var text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
-            if (text.isNullOrEmpty()) {
-                // 有些应用只把文本放进 ClipData。
-                val clip = intent.clipData
-                if (clip != null) {
-                    for (index in 0 until clip.itemCount) {
-                        val value = clip.getItemAt(index)?.text?.toString()
-                        if (!value.isNullOrEmpty()) {
-                            text = value
-                            break
-                        }
-                    }
-                }
-            }
-            if (!text.isNullOrEmpty()) {
-                return listOf(
-                    mapOf(
-                        "text" to text,
-                        "clipboard" to true
-                    )
-                )
-            }
-            return emptyList()
-        }
-
-        val persisted = persistReadPermission(uris)
-        return describeUris(uris.toList()).map { entry ->
-            val map = entry.toMutableMap()
-            val uri = entry["uri"] as? String
-            map["persistable"] = uri != null && persisted.contains(uri)
-            map
-        }
-    }
-
-    /** 尝试把读权限持久化；返回成功的 URI，未成功的只在本次运行内可读。 */
-    private fun persistReadPermission(uris: Collection<Uri>): Set<String> {
-        val persisted = mutableSetOf<String>()
+    /** 尝试把读权限持久化，使选中的文档在本次运行之后仍可读取。 */
+    private fun persistReadPermission(uris: Collection<Uri>) {
         for (uri in uris) {
             try {
                 contentResolver.takePersistableUriPermission(
                     uri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                persisted.add(uri.toString())
             } catch (_: Exception) {
-                // 分享方没给可持久化权限时忽略。
+                // 提供方没有授予可持久化权限时忽略。
             }
         }
-        return persisted
     }
 
     /**
-     * 分享来源不一定是 DocumentsProvider，SAF 的 stat 会失败；这里只依赖
+     * 文档来源不一定是 DocumentsProvider，SAF 的 stat 会失败；这里只依赖
      * OpenableColumns 取名字和大小，拿不到时再尝试打开资产文件描述符。
      */
     private fun statContentUri(uriString: String): Map<String, Any?>? {
