@@ -21,13 +21,7 @@ jobs:
           cache: true
 
       - name: Install app dependencies
-        run: |
-          # 锁文件被手工改动或截断时 pub 会直接失败；此时删除锁文件重新解析，避免构建卡在解析错误上。
-          flutter pub get || {
-            echo "flutter pub get failed; regenerating pubspec.lock"
-            rm -f pubspec.lock
-            flutter pub get
-          }
+        run: flutter pub get
 
       - name: Install core dependencies
         working-directory: packages/flashbyte_core
