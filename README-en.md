@@ -1,31 +1,38 @@
 <div align="center">
     <img src="./media/app_icon.png" alt="Flashbyte Logo" width="200" height="200"/>
-    <h1>Flashbyte</h1>
-    <h3>A Simple and fast local file sharing app.</h3>
+    <h1>Flashbyte (Chinese fork)</h1>
+    <h3>A simple and fast local file transfer tool</h3>
 </div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.1.0-blue?style=for-the-badge" alt="Version"/>
-  <img src="https://img.shields.io/github/actions/workflow/status/iamsami101/Flashbyte/ci.yml?label=CI&style=for-the-badge" alt="CI Status"/>
-  <img src="https://img.shields.io/badge/flutter-3.29-blue?logo=flutter&style=for-the-badge" alt="Flutter"/>
-  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/version-3.1.4-blue?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/flutter-3.47.7-blue?logo=flutter&style=for-the-badge" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
 </p>
 
-### Features
-- **TLS Encryption**: You can send files over an encrypted connection.
-- **Cross-platform support:** Flashbyte is supported on all the major platforms!.
-- **File sharing over local network:** You can send files over local network, without wifi access.
-- **Lossless file sharing:** Send files in their original quality.
-- **All file types supported:** Send file of any type.
-- **No file size limit:** Send files no matter their size.
-- **Doesn't use an external server:** Flashbytes sends to devices using your local network.
-- **Cross-platform:** Transfer files to any device on your local network that has Flashbyte installed.
-- **Open source & no data is collected:** All of the code is readily available on github.
+> This repository is the Chinese-localized fork of [Flashbyte](https://github.com/iamsami101/Flashbyte), based on upstream `v3.1.4`.
+> What this fork is, how it differs from upstream, the file list and the sync workflow are all documented in [About this fork](#about-this-fork) at the end of this file.
 
-### How does this work?
-Flashbyte uses pure TCP sockets to establish a connection between two devices on a local network inside an isolate (isolated memory channel) which is then utilized to read and send over the file bytes whilst keeping the frontend (main UI isolate) smooth.
+## Features
 
-You can try out Flashbyte on the following platforms:
+- **TLS encryption**: send over an encrypted connection, with peer identity checked by certificate fingerprint.
+- **Cross-platform**: Android, iOS, Windows, macOS and Linux talk to each other.
+- **Local network only**: works without Wi-Fi access; a hotspot between two devices is enough.
+- **Lossless, no size limit**: raw bytes, any file type, any size.
+- **No external server**: connections are plain TCP inside your network.
+- **Batches and resume**: offer many files at once, accept or decline them together, pause / resume / cancel the whole batch, and continue interrupted files from the received offset.
+- **Several send sources**: files, folders, and clipboard text (the receiver writes it back to its clipboard).
+- **Trusted devices**: remember a peer by certificate fingerprint and accept its offers automatically.
+- **Chinese and English UI**: follow the system language, or pick 简体中文 / English.
+- **Open source, no data collected**: all code is public.
+
+## How it works
+
+Flashbyte opens a plain TCP socket between two devices on the local network. Reading and writing happen in a dedicated isolate; the main UI isolate only handles widgets and progress, so the UI stays smooth during large transfers.
+
+Files travel as frames: an 8-byte header (metadata length, payload length) followed by JSON metadata and a binary payload. Metadata carries the commands (offer, accept, pause, progress, complete, ...) and the payload carries file chunks. A batch request lists every file in one metadata block, so the receiver approves the whole batch once.
+
+## Downloads
 
 <!-- BEGIN AUTO RELEASE DOWNLOADS -->
 | Platform | Download |
@@ -37,16 +44,20 @@ You can try out Flashbyte on the following platforms:
 | Windows | [EXE](https://github.com/ojfesc7964/Flashbyte-zh/releases/download/v3.1.4/flashbyte-windows-setup-x64.exe) \| [ZIP](https://github.com/ojfesc7964/Flashbyte-zh/releases/download/v3.1.4/flashbyte-windows-x64.zip) |
 <!-- END AUTO RELEASE DOWNLOADS -->
 
-### Contents
+## Contents
+
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Downloads](#downloads)
 - [Screenshots](#screenshots)
-- [Installation instructions](#installation-instructions)
+- [Installation](#installation)
   - [Android](#android)
   - [Linux](#linux)
   - [Windows](#windows)
   - [macOS](#macos)
   - [iOS](#ios)
 - [Signing release builds](#signing-release-builds)
-- [Building from Source](#building-from-source)
+- [Building from source](#building-from-source)
   - [Prerequisites](#prerequisites)
   - [Clone the repository](#clone-the-repository)
   - [Building for Linux](#building-for-linux)
@@ -54,47 +65,64 @@ You can try out Flashbyte on the following platforms:
   - [Building for iOS](#building-for-ios)
   - [Building for macOS](#building-for-macos)
   - [Building for Windows](#building-for-windows)
-  - [Debug builds](#debug-builds) 
+  - [Debug builds](#debug-builds)
+- [About this fork](#about-this-fork)
+  - [Scope and baseline](#scope-and-baseline)
+  - [Shared with upstream](#shared-with-upstream)
+  - [Changes in this fork](#changes-in-this-fork)
+  - [Features removed from upstream](#features-removed-from-upstream)
+  - [Dependency differences](#dependency-differences)
+  - [Files that differ](#files-that-differ)
+  - [Syncing upstream](#syncing-upstream)
+  - [Documentation conventions](#documentation-conventions)
 
 ---
 
-## Screenshots:
+## Screenshots
+
 <img src="media/previews/mobile-android.png" alt="Flashbyte Android preview" height="300"/> <img src="media/previews/desktop-linux.png" alt="Flashbyte Linux preview" height="300"/>
 
-## Installation instructions:
-- ### Android:
-Install the Flashbyte `.apk` file from the [releases](https://github.com/iamsami101/Flashbyte/releases) page. Now, run the `.apk` file wether it is through a file explorer or via your browser's download page.
+## Installation
 
-- ### Linux: 
-#### Installation script (recommended): [](#tag)
-You can install Flashbyte by running this in your linux terminal:
-```bash
-curl -fsSl "https://raw.githubusercontent.com/iamsami101/Flashbyte/refs/heads/main/install.sh" | bash
-```
-and if you want to uninstall it, you can run:
-```bash
-curl -fsSl "https://raw.githubusercontent.com/iamsami101/Flashbyte/refs/heads/main/uninstall.sh" | bash
-```
----
-#### Manual Installation
+### Android
 
-If you'd rather not run the install script, you can set up Flashbyte manually:
+Download the `.apk` from the [releases](https://github.com/ojfesc7964/Flashbyte-zh/releases) page and open it from a file manager or the browser download page. Installing from a browser requires allowing "install unknown apps" once.
+
+During a transfer the app runs a foreground service with an ongoing notification. On first launch the app asks for notification permission and battery-optimization exemption (see [Changes in this fork](#changes-in-this-fork)); without them the system suspends background transfers.
+
+### Linux
+
+#### Install script (recommended)
+
+```bash
+curl -fsSl "https://raw.githubusercontent.com/ojfesc7964/Flashbyte-zh/refs/heads/main/install.sh" | bash
+```
+
+Uninstall:
+
+```bash
+curl -fsSl "https://raw.githubusercontent.com/ojfesc7964/Flashbyte-zh/refs/heads/main/uninstall.sh" | bash
+```
+
+> The script reads the latest `.tar.gz` of the repository named in its own `GITHUB_REPO` variable. To install this fork's build, set `GITHUB_REPO` to `ojfesc7964/Flashbyte-zh` in the script, or use the manual installation below.
+
+#### Manual installation
 
 **1. Download the release**
 
-Grab the latest `flashbyte-linux-x86_64.tar.gz` from the [Releases page](https://github.com/iamsami101/flashbyte/releases).
+Grab the latest `flashbyte-linux-x64.tar.gz` from the [releases page](https://github.com/ojfesc7964/Flashbyte-zh/releases).
 
 **2. Extract it**
 
 ```bash
 mkdir -p ~/.local/share/flashbyte
-tar xzf flashbyte-linux-x86_64.tar.gz -C ~/.local/share/flashbyte
+tar xzf flashbyte-linux-x64.tar.gz -C ~/.local/share/flashbyte
 chmod +x ~/.local/share/flashbyte/flashbyte
 ```
 
 **3. Create a launcher script**
 
-This makes sure the app can find its bundled libraries at runtime:
+This lets the app find its bundled libraries at runtime:
 
 ```bash
 mkdir -p ~/.local/bin
@@ -107,13 +135,13 @@ EOF
 chmod +x ~/.local/bin/flashbyte
 ```
 
-Make sure `~/.local/bin` is on your `PATH`. Check with:
+Make sure `~/.local/bin` is on your `PATH`:
 
 ```bash
 echo $PATH | grep -q "$HOME/.local/bin" && echo "OK" || echo "not on PATH"
 ```
 
-If it's not, add this to your `~/.bashrc` or `~/.zshrc`, then restart your terminal:
+If it is not, add this line to `~/.bashrc` or `~/.zshrc` and restart the terminal:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -131,9 +159,7 @@ done
 
 **5. Install the desktop entry**
 
-> The desktop entry filename and `StartupWMClass` must match the app's
-> GApplication ID (`com.iamsami.flashbyte`) so GNOME shows the icon and app
-> name correctly in the dock.
+> The desktop entry filename and `StartupWMClass` must match the app's GApplication ID (`com.iamsami.flashbyte`) so GNOME shows the icon and name correctly in the dock.
 
 ```bash
 mkdir -p ~/.local/share/applications
@@ -142,6 +168,7 @@ cat > ~/.local/share/applications/com.iamsami.flashbyte.desktop << EOF
 Type=Application
 Name=Flashbyte
 Comment=LAN file sharing app
+Comment[zh_CN]=局域网文件共享应用
 Exec=$HOME/.local/bin/flashbyte
 Icon=flashbyte
 Categories=Network;
@@ -152,7 +179,7 @@ chmod +x ~/.local/share/applications/com.iamsami.flashbyte.desktop
 rm -f ~/.local/share/applications/flashbyte.desktop
 ```
 
-**6. Refresh your desktop caches**
+**6. Refresh the desktop caches**
 
 ```bash
 update-desktop-database ~/.local/share/applications
@@ -161,7 +188,7 @@ gtk-update-icon-cache ~/.local/share/icons/hicolor
 
 **7. Run it**
 
-Either launch **Flashbyte** from your application menu, or run it directly:
+Launch **Flashbyte** from the application menu, or run:
 
 ```bash
 flashbyte
@@ -179,73 +206,73 @@ update-desktop-database ~/.local/share/applications
 gtk-update-icon-cache ~/.local/share/icons/hicolor
 ```
 
-- ### Windows:
+### Windows
 
-Download the **Flashbyte Setup Wizard** (`flashbyte-windows-setup-x64.exe`) or the portable `flashbyte-windows-x64.zip` from the [releases](https://github.com/iamsami101/Flashbyte/releases) page.
+Download the setup wizard `flashbyte-windows-setup-x64.exe` or the portable `flashbyte-windows-x64.zip` from the [releases](https://github.com/ojfesc7964/Flashbyte-zh/releases) page.
 
-**Installer (recommended):** Run the installer and follow the wizard, then launch **Flashbyte** from the Start menu or desktop shortcut. To remove Flashbyte, use **Settings > Apps**.
+**Installer (recommended):** run the wizard and follow it, then launch Flashbyte from the Start menu or the desktop shortcut. To remove it, use **Settings > Apps**. The installer UI is available in Simplified Chinese.
 
-**Portable:** Extract the zip file, then run:
+**Portable:** extract the zip, then run:
 
 ```powershell
 flashbyte.exe
 ```
 
-If Windows SmartScreen warns you that the app is from an unknown publisher, choose **More info** and then **Run anyway**. Release builds are signed with a self-signed certificate, so Windows cannot fully trust the signature. To remove the warning, sign releases with a trusted code-signing certificate (see [Signing release builds](#signing-release-builds)). To remove the portable app, delete the extracted folder.
+If SmartScreen warns about an unknown publisher, choose **More info → Run anyway**. Release builds are signed with a self-signed certificate, so Windows cannot fully trust the signature; remove the warning with a trusted code-signing certificate (see [Signing release builds](#signing-release-builds)). Delete the extracted folder to remove the portable build.
 
-- ### macOS:
-Download `flashbyte-macos.dmg` from the [releases](https://github.com/iamsami101/Flashbyte/releases) page.
+### macOS
+
+Download `flashbyte-macos.dmg` from the [releases](https://github.com/ojfesc7964/Flashbyte-zh/releases) page.
 
 Open the DMG, drag **flashbyte.app** into **Applications**, then launch it from Applications.
 
-If macOS blocks the app because it is not signed/notarized yet, open **System Settings > Privacy & Security** and allow Flashbyte, or right-click the app and choose **Open**.
+If macOS blocks the app because it is not signed / notarized, open **System Settings > Privacy & Security** and allow Flashbyte, or right-click the app and choose **Open**.
 
-- ### iOS:
-The current iOS release artifact is an unsigned `Runner.app` zip. It is useful for CI output and local signing, but it cannot be installed on normal iPhones directly.
+### iOS
 
-To install on a device, build/sign from source with an Apple Developer account:
+The current iOS artifact is an unsigned `Runner.app` zip. It is useful for CI output and local signing, but it cannot be installed on a normal iPhone directly.
+
+To install on a device, build and sign from source with an Apple Developer account:
 
 ```bash
 flutter build ipa --release
 ```
 
-Then distribute the signed `.ipa` through TestFlight, Apple Configurator, or your own MDM/internal distribution setup.
+Then distribute the signed `.ipa` through TestFlight, Apple Configurator, or your own MDM / internal distribution.
 
 ## Signing release builds
 
-The GitHub workflow builds release artifacts and packages macOS as a DMG, but platform signing requires private certificates and provisioning files that should be stored as GitHub Actions secrets.
+The workflow builds every platform artifact and packages macOS as a DMG, but platform signing needs private certificates and provisioning files stored as GitHub Actions secrets.
 
-To sign Android releases, add an upload keystore and configure Gradle signing with secrets such as `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
+- **Android**: add an upload keystore and configure Gradle signing with `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEYSTORE_ALIAS` and `ANDROID_KEY_PASSWORD`.
+- **macOS**: use an Apple Developer ID Application certificate plus notarization credentials, usually `APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_BASE64`, `APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`.
+- **iOS**: use an Apple Distribution certificate and provisioning profile, usually `APPLE_DISTRIBUTION_CERTIFICATE_BASE64`, `APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE_BASE64` and `APPLE_TEAM_ID`.
+- **Windows**: the workflow signs `flashbyte.exe` and the Inno Setup installer with a fresh self-signed certificate on every run. That keeps the binaries tamper-evident but still triggers SmartScreen. For a trusted signature, obtain a Windows code-signing certificate and use `signtool` in the workflow, usually stored as `WINDOWS_CERTIFICATE_BASE64` and `WINDOWS_CERTIFICATE_PASSWORD`.
 
-To sign and notarize macOS releases, use an Apple Developer ID Application certificate plus notarization credentials, commonly stored as `APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_BASE64`, `APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `APPLE_ID`, and `APPLE_APP_SPECIFIC_PASSWORD`.
+## Building from source
 
-To create an installable iOS release, add an Apple Distribution certificate and provisioning profile, commonly stored as `APPLE_DISTRIBUTION_CERTIFICATE_BASE64`, `APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE_BASE64`, and `APPLE_TEAM_ID`.
-
-For Windows releases, the workflow currently signs both the executable and the Inno Setup installer with a fresh self-signed certificate. This keeps the binaries tamper-evident but still triggers a SmartScreen warning, because the signing certificate is not trusted. To sign with a trusted certificate, obtain a Windows code-signing certificate and use it with `signtool` in the workflow, commonly stored as `WINDOWS_CERTIFICATE_BASE64` and `WINDOWS_CERTIFICATE_PASSWORD`.
-
-## Building from Source
-
-If you'd like to build Flashbyte yourself instead of using a prebuilt release, you'll need Flutter installed and set up for the platform(s) you're targeting.
+Install Flutter and set up the toolchain for the platform(s) you target.
 
 ### Prerequisites
 
-- **Flutter SDK** (stable channel) — [install instructions](https://docs.flutter.dev/get-started/install)
+- **Flutter SDK** (stable channel, the workflow pins `3.47.7`) — [install instructions](https://docs.flutter.dev/get-started/install)
 - **Git**
 
-Verify your setup once Flutter is installed:
+Verify the setup:
 
 ```bash
 flutter doctor
 ```
 
-Resolve any issues it flags before continuing (missing Android SDK, missing Linux toolchain, etc. — covered per-platform below).
+Resolve what it reports (missing Android SDK, missing Linux toolchain, ... — covered per platform below).
 
 ### Clone the repository
 
 ```bash
-git clone https://github.com/iamsami101/flashbyte.git
-cd flashbyte
+git clone https://github.com/ojfesc7964/Flashbyte-zh.git
+cd Flashbyte-zh
 flutter pub get
+dart pub get -C packages/flashbyte_core
 ```
 
 ---
@@ -259,32 +286,32 @@ sudo apt update
 sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev
 ```
 
-Enable Linux desktop support if you haven't already:
+Enable Linux desktop support if needed:
 
 ```bash
 flutter config --enable-linux-desktop
 ```
 
-Build a release binary:
+Build a release bundle:
 
 ```bash
 flutter build linux --release
 ```
 
-The output bundle will be in:
+Output:
 
 ```bash
 build/linux/x64/release/bundle/
 ```
 
-This `bundle/` folder is exactly what gets packaged into the `.tar.gz` release — it contains `data/`, `lib/`, the `flashbyte` executable, and `share/` with icons and the desktop file. You can run it directly:
+That `bundle/` folder is exactly what the `.tar.gz` release contains: `data/`, `lib/`, the `flashbyte` executable, and `share/` with icons and the desktop file. Run it directly:
 
 ```bash
 cd build/linux/x64/release/bundle
 ./flashbyte
 ```
 
-Or follow the [Manual Installation](#manual-installation) steps above, using this `bundle/` folder as your source instead of a downloaded release.
+Or follow the [manual installation](#manual-installation) steps above using this `bundle/` folder as the source.
 
 ---
 
@@ -292,9 +319,9 @@ Or follow the [Manual Installation](#manual-installation) steps above, using thi
 
 **Additional prerequisites:**
 
-- Android SDK (via [Android Studio](https://developer.android.com/studio) or command-line tools)
-- A configured `ANDROID_HOME` environment variable
-- At least one accepted Android SDK license:
+- Android SDK ([Android Studio](https://developer.android.com/studio) or command-line tools)
+- A configured `ANDROID_HOME`
+- At least one accepted SDK license:
 
 ```bash
 flutter doctor --android-licenses
@@ -306,7 +333,7 @@ Build a release APK:
 flutter build apk --release
 ```
 
-The output will be at:
+Output:
 
 ```bash
 build/app/outputs/flutter-apk/app-release.apk
@@ -318,15 +345,15 @@ Install it on a connected device or emulator:
 flutter install
 ```
 
-Or manually transfer the APK to your device and install it (you'll need "Install from unknown sources" enabled, since this isn't distributed via the Play Store).
+Or copy the APK to the device and install it manually (it is not distributed through the Play Store, so "install from unknown sources" must be allowed).
 
-If you want a split APK per architecture (smaller file size):
+Split per architecture (smaller files):
 
 ```bash
 flutter build apk --split-per-abi --release
 ```
 
-This produces separate APKs in the same output folder, one per ABI (`armeabi-v7a`, `arm64-v8a`, `x86_64`).
+This produces one APK per ABI (`armeabi-v7a`, `arm64-v8a`, `x86_64`) in the same output folder.
 
 ---
 
@@ -337,33 +364,33 @@ This produces separate APKs in the same output folder, one per ABI (`armeabi-v7a
 - macOS
 - Xcode
 - CocoaPods
-- An Apple Developer account if you want to install on a physical device or create a distributable IPA
+- An Apple Developer account for installing on a device or creating a distributable IPA
 
-Enable iOS support and check your setup:
+Check the setup:
 
 ```bash
 flutter doctor
 ```
 
-Build an unsigned release app for CI/artifact inspection:
+Build an unsigned release app (CI / artifact checks):
 
 ```bash
 flutter build ios --release --no-codesign
 ```
 
-Build a signed IPA when your Apple signing certificates and provisioning profile are configured:
+Build a signed IPA once certificates and a provisioning profile are configured:
 
 ```bash
 flutter build ipa --release
 ```
 
-The unsigned app output is usually under:
+The unsigned app is usually under:
 
 ```bash
 build/ios/iphoneos/Runner.app
 ```
 
-The signed IPA output is usually under:
+The signed IPA is usually under:
 
 ```bash
 build/ios/ipa/
@@ -379,7 +406,7 @@ build/ios/ipa/
 - Xcode
 - CocoaPods
 
-Enable macOS desktop support if you haven't already:
+Enable macOS desktop support if needed:
 
 ```bash
 flutter config --enable-macos-desktop
@@ -391,13 +418,13 @@ Build a release app:
 flutter build macos --release
 ```
 
-The output app will be at:
+Output:
 
 ```bash
 build/macos/Build/Products/Release/Flashbyte.app
 ```
 
-For distribution outside your own machine, sign and notarize the app, then package it as a DMG.
+For distribution beyond your machine, sign and notarize the app, then package it as a DMG.
 
 ---
 
@@ -408,7 +435,7 @@ For distribution outside your own machine, sign and notarize the app, then packa
 - Windows
 - Visual Studio with the "Desktop development with C++" workload
 
-Enable Windows desktop support if you haven't already:
+Enable Windows desktop support if needed:
 
 ```powershell
 flutter config --enable-windows-desktop
@@ -420,22 +447,223 @@ Build a release app:
 flutter build windows --release
 ```
 
-The output bundle will be at:
+Output:
 
 ```powershell
 build\windows\x64\runner\Release\
 ```
 
-Zip the contents of that folder to distribute a portable Windows build. A bundled [Inno Setup](https://jrsoftware.org/isinfo.php) installer script is provided at `windows/installer/flashbyte.iss`; the release workflow uses it to build a signed **Setup Wizard** (`flashbyte-windows-setup-x64.exe`). For wider distribution, sign with a trusted Windows code-signing certificate.
+Zip that folder to distribute a portable build. The repository ships an [Inno Setup](https://jrsoftware.org/isinfo.php) script at `windows/installer/flashbyte.iss`; the release workflow uses it to build a signed **setup wizard** (`flashbyte-windows-setup-x64.exe`) with a Simplified Chinese installer UI. For wider distribution, sign with a trusted Windows code-signing certificate.
 
 ---
 
 ### Debug builds
 
-For development/testing rather than a release build, drop `--release` and just run:
+Drop `--release` for development and testing:
 
 ```bash
 flutter run
 ```
 
-Flutter will detect any connected device (or ask you to choose one) and hot-reload as you make changes.
+Flutter detects a connected device (or asks you to choose one) and hot-reloads on changes.
+
+---
+
+## About this fork
+
+### Scope and baseline
+
+| Item | Value |
+|---|---|
+| Upstream repository | <https://github.com/iamsami101/Flashbyte> |
+| This fork | <https://github.com/ojfesc7964/Flashbyte-zh> |
+| Baseline | upstream `v3.1.4` (`pubspec.yaml` version `3.1.4+0`, kept in sync with upstream version numbers) |
+| Policy | Stay protocol-compatible and follow upstream features where possible; localization, desktop window handling, native platform integration, transfer robustness and the release pipeline are maintained here |
+
+The fork speaks the same protocol as upstream (`flashbyte-discovery-v1` and the frame protocol), so both sides interoperate. Differences are limited to UI language, desktop window behaviour, native platform channels, transfer robustness and the release pipeline.
+
+### Shared with upstream
+
+Identical to upstream `3.1.4`:
+
+- Discovery and transfer protocol: UDP broadcast discovery, long-lived TCP connections, frame format and command set
+- TLS switch, certificate fingerprint verification, identity exchanged on first connection
+- Trusted device list (keyed by certificate fingerprint) and "Always accept from…"
+- Device-name reset and receiver name editing
+- Android reads only `content://` URIs through SAF; plain paths are read directly
+- Release workflow skeleton: five build jobs, self-signed Windows artifacts, automatic changelog sectioning, `body_path: release-body.md`
+
+### Changes in this fork
+
+#### 1. Chinese and localization
+
+- `lib/l10n/app_localizations.dart`: every UI string in Chinese and English
+- `lib/app/controllers/app_locale_controller.dart` plus a "Language" setting: follow system / Simplified Chinese / English, applied immediately and persisted
+- Notification channel names and descriptions follow the language setting
+- iOS / macOS permission strings localized (`Runner/{Base,zh-Hans}.lproj/InfoPlist.strings`)
+- macOS Chinese menu (`Runner/zh-Hans.lproj/MainMenu.strings`)
+- Android in-app strings localized (`res/values-zh/strings.xml`, foreground-service notification)
+- `fastlane/metadata/android/zh-CN/` store listing, Chinese `windows/installer/flashbyte.iss` UI, `install.sh` / `uninstall.sh` printing Chinese when `LANG` says so, Chinese `Comment` in the `.desktop` entry
+
+#### 2. Desktop window and single instance
+
+- `lib/platform/window_state_manager.dart` persists and restores window position, size and maximized state
+- The Linux / Windows / macOS native layers no longer show the window on the first frame; Dart restores geometry and then calls `show()`; macOS / Windows fade in over roughly 160 ms
+- A restored position outside every visible display falls back to centered; when geometry is unavailable the previous position is kept
+- macOS: clicking the dock icon restores a minimized or background window (`applicationShouldHandleReopen`)
+- Windows: `main.cpp` adds a single-instance mutex; a second launch only raises the existing window
+- Linux: switched to `G_APPLICATION_HANDLES_COMMAND_LINE`, so a second process forwards activation to the running instance
+
+#### 3. Sending and receiving
+
+- Clipboard sending: `lib/services/transfer/clipboard_text_file.dart` writes clipboard text to a temporary file; the receiver uses the `clipboard` flag to assemble it in memory and put it back on its clipboard instead of writing a file
+- Batch offers: many files offered once and approved once; the session page offers accept all / decline all and pause all / resume all / cancel all
+- Resumable transfers: the receiver keeps unfinished data in a partial file and continues from the received offset; `finalizeFile` turns it into the destination file once complete
+- Per-file cards in the session page: queued, waiting for approval, transferring, paused, completed and cancelled each have their own state and actions
+- In-session send entries: clipboard / file / folder, without going back to the picker page
+- Actionable notifications: batch progress notifications and accepting or declining an offer from the notification; offers handled while the app is backgrounded are recorded in `SocketService` so the approval page is not shown again when the app returns
+- Renaming a device pushes `update_peer_info` to the connected peer immediately
+
+#### 4. Transfer robustness and safety
+
+- `packages/flashbyte_core/lib/protocol/frame_protocol.dart`: frame limits (4 MiB metadata, 32 MiB payload) and a bounded read buffer; exceeding them closes the connection instead of buffering without limit
+- Serialized frame writes: every frame on one socket is queued on a single future, so heartbeats can no longer race a chunk and hit `StreamSink is bound to a stream`
+- Write-failure memory: `isFrameWriterFailed` lets the heartbeat fail fast instead of awaiting a write that can never succeed
+- `packages/flashbyte_core/lib/utils/file_utils.dart`: file-name sanitizing (strip path separators to prevent directory traversal, replace characters Windows rejects, prefix reserved Windows device names, truncate by UTF-8 bytes)
+- Discovery: per-source rate limit (60 messages per second window), 64 device cap, broadcast interval 2 s → 5 s, strict hello validation, serialized `stop` operations
+- `tls_identity_service.dart`: RSA generation moved to a worker isolate so first launch does not block the first frame; concurrent callers share one generation
+- `socket_service.dart`: `stopConnectionGracefully` has a 4 s timeout; only fatal errors end the session state; a resume reconnect no longer sends `transfer_cancelled`, so the receiver keeps its partial file
+- Broadcast failures no longer catch `SocketException` only — other exceptions are skipped and retried on the next heartbeat
+
+#### 5. Device names
+
+- The device name defaults to the device model (internal model codes fall back to brand / hostname); the random two-word name is gone
+- `packages/flashbyte_core/lib/utils/device_name.dart`: name rules (sanitize, length, validation)
+- Names received from discovered peers are sanitized as well
+
+#### 6. Android native integration
+
+- Three upstream plugin dependencies replaced with native code: `disable_battery_optimization` → the `flashbyte/battery_optimization` channel; Android file picking uses native `ACTION_OPEN_DOCUMENT` (`flashbyte/documents`) instead of a plugin that copies files into the cache; `process_run` → `dart:io` `Process.run`
+- `MainActivity.kt` exposes four channels:
+  - `flashbyte/documents`: system document picker (multi-select) and `content://` metadata (`pickDocuments` / `statUri`)
+  - `flashbyte/battery_optimization`: battery-optimization exemption state and opening the app info page
+  - `flashbyte/foreground_service`: start / stop the foreground service during transfers
+  - `flashbyte/storage`: free-space precheck before receiving
+- `TransferForegroundService.kt` plus `res/values{,-zh}/strings.xml`: foreground notification during transfers (`dataSync` type)
+- `AndroidManifest.xml`: declares the foreground service and its permissions; upstream's `READ_EXTERNAL_STORAGE` and `REQUEST_INSTALL_PACKAGES` are gone, and `allowBackup` / `fullBackupContent` are disabled
+- `lib/widgets/background_permission_gate.dart`: on launch, checks notification permission and battery-optimization exemption and blocks the UI with a non-dismissible overlay until both are granted (upstream showed a dismissible one-time prompt instead)
+
+#### 7. iOS / macOS
+
+- `ios/Runner/Info.plist`: upstream's `NSLocationWhenInUseUsageDescription` removed (location is no longer needed)
+- `ios/Runner/AppDelegate.swift`: registers the `flashbyte/battery_optimization` channel; on iOS "Background App Refresh" stands in for the battery-optimization exemption
+- `macos/Runner/Info.plist`: `CFBundleLocalizations` declares `en` / `zh-Hans`
+- `macos/Runner/MainFlutterWindow.swift`: starts fully transparent and fades in after Dart restores geometry, avoiding a black flash and a position jump
+
+#### 8. Tests and CI
+
+- `packages/flashbyte_core/test/`: new tests for device-name rules, frame limits, write serialization and file-name sanitizing
+- `test/app/device_name_test.dart`: app-level device-name tests
+- `.github/workflows/ci.yml`: manual trigger (`workflow_dispatch`), reduced to analyze plus app and core tests
+- `.github/workflows/release.yml`: adds a `verify` job; the Windows build downloads the Inno Setup Chinese language file; the download table is written into both `README.md` and `README-en.md` and the job fails when either file lacks the markers
+
+### Features removed from upstream
+
+| Feature | Upstream | This fork |
+|---|---|---|
+| Receiving files shared from other apps | `receive_sharing_intent` (Android share intents plus text-to-`.txt`) | **Removed**: the app no longer appears in the share sheet; sending starts inside the app with a file / folder / clipboard pick |
+| Desktop drag and drop | `desktop_drop` (drop files into the window to queue them) | **Removed**: only the in-app clipboard / file / folder buttons |
+| Random two-word device names | `lib/utils/two_random_words.dart` plus `random_words.dart` | **Removed**: the device model is used by default, and the name can be edited or reset |
+| Dismissible battery-optimization prompt | Launch dialog with "Not now" and "Do not show again" | **Changed** into a launch gate: until notification permission and the exemption are granted, a non-dismissible overlay guides to system settings |
+
+### Dependency differences
+
+`pubspec.yaml` compared with upstream:
+
+| Change | Dependency | Reason |
+|---|---|---|
+| Removed | `desktop_drop` | drag-and-drop feature removed |
+| Removed | `receive_sharing_intent` | system-share receiving removed |
+| Removed | `disable_battery_optimization` | replaced by the native `flashbyte/battery_optimization` channel |
+| Removed | `process_run` | replaced by `dart:io` `Process.run` (`file_preview_widget.dart`) |
+| Removed | `windowed_file_reader` | never referenced by any Dart code upstream |
+| Added | `flutter_localizations` (SDK) | UI localization |
+| Added | `screen_retriever` | verifies that a restored window is still on a visible display |
+
+Every other dependency (`window_manager`, `saf`, `fast_file_picker`, `awesome_notifications`, `device_info_plus`, ...) matches upstream.
+
+### Files that differ
+
+Scope: file-by-file comparison against the upstream `v3.1.4` source (excluding `.git`, `build`, `.dart_tool`, `.idea`, `.vscode`, `Pods`, `ephemeral` and binary artifacts).
+
+#### Added by this fork (24)
+
+| File | Purpose |
+|---|---|
+| `README-en.md` | English documentation (this file) |
+| `lib/l10n/app_localizations.dart` | Chinese and English strings |
+| `lib/app/controllers/app_locale_controller.dart` | Language controller |
+| `lib/app/device_name.dart` | Device-name normalization and validation |
+| `lib/platform/window_state_manager.dart` | Window geometry persistence and fade-in |
+| `lib/widgets/background_permission_gate.dart` | Notification and battery-optimization gate |
+| `lib/services/platform/android_document_service.dart` | System document picker and `statUri` |
+| `lib/services/platform/android_storage_service.dart` | Free-space precheck |
+| `lib/services/platform/transfer_foreground_service.dart` | Foreground service (Dart side) |
+| `lib/services/transfer/clipboard_text_file.dart` | Clipboard text temporary file |
+| `packages/flashbyte_core/lib/utils/device_name.dart` | Device-name rules (core) |
+| `packages/flashbyte_core/test/device_name_rules_test.dart` | Device-name rule tests |
+| `test/app/device_name_test.dart` | App-level device-name tests |
+| `android/app/src/main/kotlin/com/flashbyte/TransferForegroundService.kt` | Transfer foreground service |
+| `android/app/src/main/res/values/strings.xml` | Foreground notification strings (English) |
+| `android/app/src/main/res/values-zh/strings.xml` | Foreground notification strings (Chinese) |
+| `ios/Runner/Base.lproj/InfoPlist.strings` | iOS permission strings (English) |
+| `ios/Runner/zh-Hans.lproj/InfoPlist.strings` | iOS permission strings (Chinese) |
+| `macos/Runner/Base.lproj/InfoPlist.strings` | macOS permission strings (English) |
+| `macos/Runner/zh-Hans.lproj/InfoPlist.strings` | macOS permission strings (Chinese) |
+| `macos/Runner/zh-Hans.lproj/MainMenu.strings` | macOS Chinese menu |
+| `fastlane/metadata/android/zh-CN/full_description.txt` | Store long description (Chinese) |
+| `fastlane/metadata/android/zh-CN/short_description.txt` | Store short description (Chinese) |
+| `fastlane/metadata/android/zh-CN/changelogs/2.txt` | Store changelog (Chinese) |
+
+#### Upstream only (3)
+
+| File | Notes |
+|---|---|
+| `lib/services/sharing/incoming_share_service.dart` | System-share receiving (feature removed) |
+| `lib/utils/two_random_words.dart` | Random two-word device names (replaced by the device model) |
+| `packages/flashbyte_core/lib/identity/random_words.dart` | Word list for the above |
+
+#### Modified (49)
+
+| Group | Files |
+|---|---|
+| Docs | `README.md`, `CHANGELOG.md` |
+| CI and release | `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `windows/installer/flashbyte.iss`, `install.sh`, `uninstall.sh`, `linux/com.iamsami.flashbyte.desktop`, `.gitignore` |
+| Dependencies | `pubspec.yaml`, `pubspec.lock` |
+| Android | `android/app/src/main/AndroidManifest.xml`, `android/app/src/main/kotlin/com/flashbyte/MainActivity.kt`, `lib/services/platform/android_connection_notification_service.dart`, `lib/services/platform/android_saf_service.dart` |
+| iOS / macOS | `ios/Runner.xcodeproj/project.pbxproj`, `ios/Runner/AppDelegate.swift`, `ios/Runner/Info.plist`, `macos/Runner.xcodeproj/project.pbxproj`, `macos/Runner/AppDelegate.swift`, `macos/Runner/Info.plist`, `macos/Runner/MainFlutterWindow.swift` |
+| Linux / Windows window | `linux/runner/my_application.cc`, `windows/runner/main.cpp`, `windows/runner/flutter_window.cpp` |
+| UI and localization | `lib/main.dart`, `lib/app/app_settings.dart`, `lib/features/settings/settings_page.dart`, `lib/features/transfers/pages/file_selection_page.dart`, `lib/features/transfers/pages/incoming_transfer_offer_page.dart`, `lib/features/transfers/pages/outgoing_transfer_offer_page.dart`, `lib/features/transfers/pages/tcp_chat_page.dart`, `lib/features/transfers/widgets/transfer_widget.dart`, `lib/features/transfers/widgets/file_preview_widget.dart` |
+| Transfer, discovery and security | `lib/services/transfer/file_transfer_isolate.dart`, `lib/services/transfer/socket_service.dart`, `lib/services/discovery/device_discovery_service.dart`, `lib/services/security/tls_identity_service.dart`, `lib/services/security/trusted_devices_service.dart` |
+| `flashbyte_core` | `lib/protocol/frame_protocol.dart`, `lib/utils/file_utils.dart`, `lib/utils/utils.dart`, `lib/adapters/output_target_adapter.dart`, `lib/identity/device_identity.dart`, `lib/identity/identity.dart` |
+| Tests | `packages/flashbyte_core/test/frame_protocol_test.dart`, `packages/flashbyte_core/test/file_utils_test.dart`, `packages/flashbyte_core/test/device_identity_test.dart`, `test/features/transfers/transfer_widget_test.dart` |
+
+### Syncing upstream
+
+1. Fetch the new upstream version and compare it against "Files that differ" above to see which shared files changed
+2. Apply upstream features and fixes to `lib/` and `packages/flashbyte_core/`, keeping the localization structure: new UI text goes into `AppLocalizations`, never hard-coded in widgets
+3. Never let upstream overwrite:
+   - `lib/l10n/`, `lib/app/controllers/app_locale_controller.dart`, `lib/app/device_name.dart`
+   - `lib/platform/window_state_manager.dart` and the native window-show timing plus single-instance handling on all three desktop platforms
+   - `lib/widgets/background_permission_gate.dart` and the four native channels (documents / battery_optimization / foreground_service / storage)
+   - the dual-README download table section and the Inno Setup Chinese language step in `release.yml`
+   - `windows/installer/flashbyte.iss`, `install.sh`, `uninstall.sh`, the `.desktop` entry, and the `Base` / `zh-Hans` string files on every platform
+   - the removed features (system-share receiving, desktop drag and drop): skip upstream changes to them
+4. Bump the `pubspec.yaml` version and record the changes in the `## Unreleased` section of `CHANGELOG.md`
+5. Update "Files that differ" whenever files are added or removed
+
+### Documentation conventions
+
+- The download table in `README.md` and `README-en.md` is written by `.github/workflows/release.yml` between a pair of `AUTO RELEASE DOWNLOADS` HTML comment markers in the Downloads section: **do not edit the table by hand**, and keep both markers in both files — the release job fails when one is missing
+- Version badges and the artifact names in the installation section follow `pubspec.yaml` and the release workflow
+- `CHANGELOG.md` keeps its entries in the `## Unreleased` section; the release workflow moves them into a dated version section and publishes them as the release notes, so every change is a single `- ` line
