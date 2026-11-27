@@ -25,7 +25,7 @@
 - **无损、无大小限制**：按原始字节传输，支持任意类型与任意大小的文件。
 - **不经过外部服务器**：只使用本地网络建立 TCP 连接。
 - **批量与续传**：多文件一次发起、一次批准，可整体暂停 / 继续 / 取消；中断后按已接收位置续传。
-- **多种发送入口**：文件、文件夹、粘贴板文本（接收端直接写回粘贴板）。
+- **多种发送入口**：文件、文件夹、粘贴板文本（接收端直接写回粘贴板）；桌面端还可以把文件直接拖进窗口。
 - **可信设备**：按证书指纹记住设备，之后自动接受其文件请求。
 - **中英双语**：跟随系统，或手动切换简体中文 / English。
 - **开源、不收集数据**：全部代码公开。
@@ -495,6 +495,7 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 - 可信设备列表（按证书指纹）、「始终接受来自…」
 - 设备名重置、接收端设备名编辑
 - Android 对 `content://` 只用 SAF 读取，普通路径直接读
+- 桌面端文件拖放：把文件拖进窗口即作为待发送列表（Windows / macOS / Linux）
 - 发布工作流骨架：五个平台的构建任务、自签名 Windows 产物、CHANGELOG 自动分节、`body_path: release-body.md`
 
 ### 本分支的改动
@@ -576,7 +577,6 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 | 功能 | 上游做法 | 本分支现状 |
 |---|---|---|
 | 接收其它应用分享的文件 | `receive_sharing_intent` 插件（Android 分享意图 + 文本转 `.txt`） | **已移除**：不在系统分享面板出现，发送只能从应用内选择文件 / 文件夹 / 粘贴板 |
-| 桌面拖放发送 | `desktop_drop`（把文件拖进窗口即加入待发送列表） | **已移除**：只用应用内的粘贴板 / 文件 / 文件夹按钮 |
 | 随机两词设备名 | `lib/utils/two_random_words.dart` + `random_words.dart` | **已移除**：默认取设备型号，可手动改名或重置 |
 | 可关闭的电池优化提示 | 启动弹窗，可「以后再说」并记住选择 | **改为**启动门禁：未放行通知权限 / 电池优化时用遮罩引导，不提供跳过 |
 
@@ -586,7 +586,6 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 
 | 变动 | 依赖 | 说明 |
 |---|---|---|
-| 移除 | `desktop_drop` | 桌面拖放功能一并移除 |
 | 移除 | `receive_sharing_intent` | 系统分享接收功能一并移除 |
 | 移除 | `disable_battery_optimization` | 改用原生通道 `flashbyte/battery_optimization` |
 | 移除 | `process_run` | 改用 `dart:io` 的 `Process.run`（`file_preview_widget.dart`） |
@@ -663,7 +662,7 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
    - `lib/widgets/background_permission_gate.dart` 与四个原生通道（documents / battery_optimization / foreground_service / storage）
    - `release.yml` 的双 README 下载表写入段与 Inno Setup 中文语言文件步骤
    - `windows/installer/flashbyte.iss`、`install.sh`、`uninstall.sh`、`.desktop`、各平台 `Base` / `zh-Hans` 字符串文件
-   - 已裁剪的功能（系统分享接收、桌面拖放）：上游若再改这几处，直接跳过
+   - 已裁剪的功能（系统分享接收）：上游若再改这处，直接跳过
 4. 同步后更新 `pubspec.yaml` 版本号，并把本次改动写进 `CHANGELOG.md` 的 `## Unreleased` 段
 5. 新增或删除文件时，同步更新本节「文件差异清单」
 
