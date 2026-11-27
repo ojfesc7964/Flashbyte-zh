@@ -8,9 +8,7 @@
 
 ## Unreleased
 
-- 移除：不再接收其它应用通过系统分享交给 Flashbyte 的文件。Android 分享意图与 iOS 分享扩展一并删除，应用不再出现在系统分享面板；发送只能从应用内选择文件、文件夹或粘贴板
-- 移除：桌面端文件拖放（Windows / macOS / Linux），发送入口只剩应用内的粘贴板 / 文件 / 文件夹按钮
-- 依赖：移除 `receive_sharing_intent`、`desktop_drop` 两个只服务上述功能的依赖
+- 移除：不再接收其它应用通过系统分享交给 Flashbyte 的文件。Android 分享意图与 iOS 分享扩展一并删除，应用不再出现在系统分享面板；发送只能从应用内选择文件、文件夹或粘贴板（依赖 `receive_sharing_intent` 随之移除）
 - 文档：`FORK.md` / `FORK-en.md` 合并进 `README.md` / `README-en.md`，两份 README 重写并新增与上游的逐项对比
 - 文档：重写本文件，改为按本分支视角记录差异条目
 - 文档：新增 `CHANGELOG-en.md` 作为本文件的英文镜像
@@ -18,7 +16,7 @@
 
 ## 3.1.4 - 2026-11-18
 
-首个中文版，基于上游 `3.1.4`。该版本仍包含系统分享接收与桌面拖放，二者已在上面的 `Unreleased` 段移除。
+首个中文版，基于上游 `3.1.4`。该版本仍包含系统分享接收，已在 `Unreleased` 段移除；桌面端拖放与上游一致，保留。
 
 ### 本地化
 
@@ -75,7 +73,7 @@
 ### 依赖
 
 - 新增 `flutter_localizations`（SDK）与 `screen_retriever`
-- 移除 `receive_sharing_intent`、`desktop_drop`、`disable_battery_optimization`、`process_run`、`windowed_file_reader`
+- 移除 `receive_sharing_intent`、`disable_battery_optimization`、`process_run`、`windowed_file_reader`
 
 ### 测试与 CI
 
