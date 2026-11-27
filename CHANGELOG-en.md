@@ -6,9 +6,7 @@ Kept in sync with the Chinese [`CHANGELOG.md`](CHANGELOG.md). The release workfl
 
 ## Unreleased
 
-- Removed: receiving files that other apps share to Flashbyte. The Android share intents and the iOS share extension are gone, so the app no longer appears in the system share sheet; files can only be picked from inside the app (file, folder or clipboard)
-- Removed: desktop drag and drop (Windows / macOS / Linux); the only send sources are the in-app clipboard / file / folder buttons
-- Dependencies: dropped `receive_sharing_intent` and `desktop_drop`, which existed only for the two features above
+- Removed: receiving files that other apps share to Flashbyte. The Android share intents and the iOS share extension are gone, so the app no longer appears in the system share sheet; files can only be picked from inside the app (file, folder or clipboard). `receive_sharing_intent` is dropped with it
 - Docs: `FORK.md` / `FORK-en.md` merged into `README.md` / `README-en.md`, both READMEs rewritten with a full comparison against upstream
 - Docs: this changelog rewritten to describe the fork's own delta
 - Docs: added this English mirror next to `CHANGELOG.md`
@@ -16,7 +14,7 @@ Kept in sync with the Chinese [`CHANGELOG.md`](CHANGELOG.md). The release workfl
 
 ## 3.1.4 - 2026-11-18
 
-The first Chinese release, based on upstream `3.1.4`. That release still contained system-share receiving and desktop drag and drop; both are removed in the `Unreleased` section above.
+The first Chinese release, based on upstream `3.1.4`. That release still contained system-share receiving, removed in the `Unreleased` section above; desktop drag and drop matches upstream and is kept.
 
 ### Localization
 
@@ -73,7 +71,7 @@ The first Chinese release, based on upstream `3.1.4`. That release still contain
 ### Dependencies
 
 - Added `flutter_localizations` (SDK) and `screen_retriever`
-- Removed `receive_sharing_intent`, `desktop_drop`, `disable_battery_optimization`, `process_run`, `windowed_file_reader`
+- Removed `receive_sharing_intent`, `disable_battery_optimization`, `process_run`, `windowed_file_reader`
 
 ### Tests and CI
 
