@@ -402,29 +402,34 @@ jobs:
                   bullets.append(f"- {subject}")
               return bullets
 
-          path = Path("CHANGELOG.md")
-          lines = path.read_text().splitlines()
+          def bump_changelog(path: Path, fallback_fn):
+              """把 Unreleased 段搬进带日期的版本段，返回该版本的条目。
 
-          version_idx = next(
-              (i for i, line in enumerate(lines) if line.startswith(f"## {version}")),
-              None,
-          )
-          unreleased_idx = next(
-              (
-                  i
-                  for i, line in enumerate(lines)
-                  if re.match(r"^##\s+Unreleased\s*$", line, re.I)
-              ),
-              None,
-          )
-
-          if version_idx is not None:
-              # Heading already present (workflow rerun): reuse its entries.
-              bullets = section_bullets(lines, version_idx) or git_log_bullets()
-          else:
+              文件不存在或没有条目时返回空列表，且不改写文件。
+              """
+              if not path.exists():
+                  return []
+              lines = path.read_text(encoding="utf-8").splitlines()
+              version_idx = next(
+                  (i for i, line in enumerate(lines) if line.startswith(f"## {version}")),
+                  None,
+              )
+              if version_idx is not None:
+                  # Heading already present (workflow rerun): reuse its entries.
+                  return section_bullets(lines, version_idx) or fallback_fn()
+              unreleased_idx = next(
+                  (
+                      i
+                      for i, line in enumerate(lines)
+                      if re.match(r"^##\s+Unreleased\s*$", line, re.I)
+                  ),
+                  None,
+              )
               if unreleased_idx is None:
-                  raise SystemExit("CHANGELOG.md has no '## Unreleased' section")
-              bullets = section_bullets(lines, unreleased_idx) or git_log_bullets()
+                  raise SystemExit(f"{path} has no '## Unreleased' section")
+              bullets = section_bullets(lines, unreleased_idx) or fallback_fn()
+              if not bullets:
+                  return []
               header = lines[:unreleased_idx]
               rest = lines[
                   next(
@@ -446,16 +451,31 @@ jobs:
               text = re.sub(r"\n{3,}", "\n\n", "\n".join(new_lines))
               if not text.endswith("\n"):
                   text += "\n"
-              path.write_text(text)
+              path.write_text(text, encoding="utf-8")
+              return bullets
 
-          changes = "\n".join(bullets) if bullets else "_No changelog entries._"
+          chinese_bullets = bump_changelog(Path("CHANGELOG.md"), git_log_bullets)
+          english_bullets = bump_changelog(Path("CHANGELOG-en.md"), lambda: [])
+
+          changes = "\n".join(chinese_bullets) if chinese_bullets else "_No changelog entries._"
           body = f"""\
           {tag}
 
           ## Changes
 
           {changes}
+          """
+          if english_bullets:
+              english = "\n".join(english_bullets)
+              body += f"""
+          <details>
+          <summary>English</summary>
 
+          {english}
+
+          </details>
+          """
+          body += f"""
           Commit: `{sha}`.
 
           Artifacts:
@@ -465,7 +485,7 @@ jobs:
           - macOS DMG
           - unsigned iOS Runner.app bundle
           """
-          Path("release-body.md").write_text(body + "\n")
+          Path("release-body.md").write_text(body + "\n", encoding="utf-8")
           PY
 
       - name: Remove existing release artifacts
@@ -514,8 +534,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          if ! git diff --quiet CHANGELOG.md; then
-            git add CHANGELOG.md
+          changelog_files=()
+          for file in CHANGELOG.md CHANGELOG-en.md; do
+            if [ -f "$file" ] && ! git diff --quiet -- "$file"; then
+              changelog_files+=("$file")
+            fi
+          done
+          if [ ${#changelog_files[@]} -gt 0 ]; then
+            git add "${changelog_files[@]}"
             git commit -m "docs: add ${RELEASE_TAG} to changelog [skip ci]"
           fi
 
@@ -559,7 +585,7 @@ jobs:
           for readme in readme_files:
               if not readme.exists():
                   continue
-              text = readme.read_text()
+              text = readme.read_text(encoding="utf-8")
               if start not in text or end not in text:
                   raise SystemExit(
                       f"README release download markers not found in {readme}"
@@ -567,7 +593,7 @@ jobs:
               section = section_zh if readme.name == "README.md" else section_en
               before, marker, rest = text.partition(start)
               _, marker, after = rest.partition(end)
-              readme.write_text(before + section + after)
+              readme.write_text(before + section + after, encoding="utf-8")
           PY
 
             readme_created=0
