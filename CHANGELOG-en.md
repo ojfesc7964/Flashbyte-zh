@@ -12,6 +12,7 @@ Kept in sync with the Chinese [`CHANGELOG.md`](CHANGELOG.md). The release workfl
 - Docs: `FORK.md` / `FORK-en.md` merged into `README.md` / `README-en.md`, both READMEs rewritten with a full comparison against upstream
 - Docs: this changelog rewritten to describe the fork's own delta
 - Docs: added this English mirror next to `CHANGELOG.md`
+- Docs: both READMEs start with a language switch entry that jumps between the Chinese and English files
 
 ## 3.1.4 - 2026-11-18
 
