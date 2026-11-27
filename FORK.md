@@ -12,7 +12,6 @@
 
 - 设备名默认取设备型号，内部型号码回退到品牌 / 主机名
 - 设备名重置按钮、可信设备列表（按证书指纹）、"始终接受来自…"
-- 分享菜单接收文件、文本转 `.txt`、会话中直接发送
 - 安卓仅对 `content://` 使用 SAF 读取，普通路径直接读取
 - 发布工作流：Windows 自签名（证书、`flashbyte.exe`、安装程序）、CHANGELOG 自动分节、`body_path: release-body.md`
 
@@ -39,6 +38,10 @@
 - macOS / Windows 显示后执行约 160ms 淡入，避免空白窗口和位置跳变
 - 恢复的位置不在任何显示器可见区域内时回退居中；无法获取几何信息时沿用上次位置
 - `lib/main.dart` 用 `WindowStateManager` 替换上游的 `windowManager.waitUntilReadyToShow`
+
+### 功能裁剪
+
+- 去掉系统分享接收：不再出现在系统分享面板，只能从应用内选择文件、文件夹或粘贴板发起发送（移除 iOS 分享扩展、Android 分享意图、`lib/services/sharing/`）
 
 ### 传输逻辑
 
