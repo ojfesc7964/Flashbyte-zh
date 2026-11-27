@@ -10,6 +10,10 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
 </p>
 
+<p align="center">
+  <b>简体中文</b> · <a href="README-en.md">English</a>
+</p>
+
 > 本仓库是 [Flashbyte](https://github.com/iamsami101/Flashbyte) 的中文本地化分支，代码基线为上游 `v3.1.4`。
 > 分支定位、与上游的差异、文件清单和同步流程集中写在文末的 [本分支说明](#本分支说明)。
 
@@ -667,4 +671,5 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 
 - `README.md` 与 `README-en.md` 内的下载表由 `.github/workflows/release.yml` 按一对 `AUTO RELEASE DOWNLOADS` 起止注释（HTML 注释形式，位于「下载」小节）自动写入：**不要手改表格本身**，两个文件都必须保留这对注释，缺一个发布任务会失败
 - 版本徽章、安装说明中的版本号与产物文件名跟随 `pubspec.yaml` 与发布工作流
+- 两份 README 顶部各有一行语言切换入口（当前语言加粗，另一种语言链接到对方文件），改动时不要删除
 - 更新日志分中英两份（`CHANGELOG.md` / `CHANGELOG-en.md`），发布工作流把两份的 `## Unreleased` 段都搬进同一日期版本段：中文条目作为 Release 说明正文，英文条目放进可折叠的 English 段；因此每条改动写成一行 `- ` 条目
