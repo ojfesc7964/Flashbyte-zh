@@ -33,7 +33,7 @@ class _SourceReadException implements Exception {
   String toString() => message;
 }
 
-/// 与 Android 原生查询 URI 元数据的通道；分享来源可能不是 DocumentsProvider。
+/// 与 Android 原生查询 URI 元数据的通道；来源提供方可能不是 DocumentsProvider。
 const MethodChannel _documentsChannel = MethodChannel('flashbyte/documents');
 
 /// Serializes partial-file cleanup with a reconnect that may reopen the same
@@ -1323,7 +1323,7 @@ Future<_SendSource?> _openAndroidSendSource(Saf saf, String uri) async {
   );
 }
 
-/// SAF 的 stat 只支持 DocumentsProvider；分享来源（相册、社交应用等）常常
+/// SAF 的 stat 只支持 DocumentsProvider；选择来源（相册、社交应用等）常常
 /// 不是，这时用原生按 OpenableColumns 取名字和大小，读取仍走 content:// 流。
 Future<({String name, int size})?> _statContentUri(String uri) async {
   try {
