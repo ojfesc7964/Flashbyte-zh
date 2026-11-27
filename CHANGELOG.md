@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Removed receiving files shared to Flashbyte from other apps (Android share menu and iOS share extension); files can only be picked from inside the app now
+
 ## 3.1.4 - 2026-11-18
 
 - Receive tab device name field now shows "Creating your name..." hint when the field is empty
