@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flashbyte/app/controllers/app_motion_controller.dart';
 import 'package:fast_file_picker/fast_file_picker.dart';
 import 'package:flashbyte/app/app_settings.dart';
@@ -73,6 +74,7 @@ class _FileSelectionPageState extends State<FileSelectionPage>
   bool chatOpened = false;
   bool _incomingOfferOpen = false;
   bool _outgoingOfferOpen = false;
+  bool _isDraggingFilesOverSendCard = false;
   bool _allowFileSelectionPop = false;
   bool _isHandlingFileSelectionPop = false;
   bool _exitNotificationSent = false;
@@ -526,6 +528,36 @@ class _FileSelectionPageState extends State<FileSelectionPage>
         ..clear()
         ..add(file.path);
     });
+  }
+
+  void _handleDroppedFiles(DropDoneDetails details) {
+    if (isConnectingToSender) {
+      return;
+    }
+
+    final droppedFiles = <FastFilePickerPath>[];
+    for (final droppedItem in details.files) {
+      final path = droppedItem.path;
+      if (path.isEmpty || !FileSystemEntity.isFileSync(path)) {
+        continue;
+      }
+
+      droppedFiles.add(FastFilePickerPath.fromPath(droppedItem.name, path));
+    }
+
+    setState(() {
+      _isDraggingFilesOverSendCard = false;
+      if (droppedFiles.isNotEmpty) {
+        selectedFiles = droppedFiles;
+        _clipboardFilePaths.clear();
+      }
+    });
+
+    if (droppedFiles.isEmpty) {
+      showScaffoldSnackbar(
+        AppLocalizations.of(context).dropFilesOnly,
+      );
+    }
   }
 
   void _handleTabChanged() {
@@ -2132,16 +2164,61 @@ class _FileSelectionPageState extends State<FileSelectionPage>
 
   Widget _buildSelectedFilesCard() {
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final card = Card(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: colorScheme.surfaceContainerLow,
+      color: _isDraggingFilesOverSendCard
+          ? colorScheme.primaryContainer.withValues(alpha: 0.58)
+          : colorScheme.surfaceContainerLow,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: _buildSelectedFilesCardContents(colorScheme),
+      child: CustomPaint(
+        foregroundPainter: _isDraggingFilesOverSendCard
+            ? _DashedRoundedRectPainter(
+                color: colorScheme.primary,
+                radius: 28,
+                strokeWidth: 2,
+              )
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: AnimatedSwitcher(
+            duration: reducedMotion ? Duration.zero : 180.ms,
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: _isDraggingFilesOverSendCard
+                ? _buildDropFilesState(colorScheme)
+                : _buildSelectedFilesCardContents(colorScheme),
+          ),
+        ),
       ),
+    );
+
+    if (!_supportsDesktopDrop) {
+      return card;
+    }
+
+    return DropTarget(
+      enable: !isConnectingToSender,
+      onDragEntered: (_) {
+        if (!mounted || _isDraggingFilesOverSendCard) {
+          return;
+        }
+        setState(() {
+          _isDraggingFilesOverSendCard = true;
+        });
+      },
+      onDragExited: (_) {
+        if (!mounted || !_isDraggingFilesOverSendCard) {
+          return;
+        }
+        setState(() {
+          _isDraggingFilesOverSendCard = false;
+        });
+      },
+      onDragDone: _handleDroppedFiles,
+      child: card,
     );
   }
 
@@ -2308,6 +2385,50 @@ class _FileSelectionPageState extends State<FileSelectionPage>
     );
   }
 
+  Widget _buildDropFilesState(ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context);
+    return ConstrainedBox(
+      key: const ValueKey('drop-files-state'),
+      constraints: const BoxConstraints(minHeight: 172),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 12,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.file_download_rounded,
+                color: colorScheme.primary,
+                size: 30,
+              ),
+            ),
+            Text(
+              l10n.dropFilesHere,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              l10n.releaseToReplaceSelection,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSelectedFileTile(FastFilePickerPath file) {
     final colorScheme = Theme.of(context).colorScheme;
     final extension = _fileExtensionLabel(file.name);
@@ -2408,6 +2529,9 @@ class _FileSelectionPageState extends State<FileSelectionPage>
     return l10n.nFilesSelected(count);
   }
 
+  bool get _supportsDesktopDrop =>
+      Platform.isLinux || Platform.isMacOS || Platform.isWindows;
+
   void showScaffoldSnackbar(String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2493,4 +2617,49 @@ class _FileSelectionPageState extends State<FileSelectionPage>
 
   bool get _settingsLocked =>
       isConnectingToSender || isReceiveStarting || chatOpened;
+}
+
+class _DashedRoundedRectPainter extends CustomPainter {
+  const _DashedRoundedRectPainter({
+    required this.color,
+    required this.radius,
+    required this.strokeWidth,
+  });
+
+  final Color color;
+  final double radius;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(strokeWidth / 2),
+      Radius.circular(radius - strokeWidth / 2),
+    );
+    final path = Path()..addRRect(rrect);
+
+    const dashLength = 10.0;
+    const gapLength = 8.0;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final nextDistance = math.min(distance + dashLength, metric.length);
+        canvas.drawPath(metric.extractPath(distance, nextDistance), paint);
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRoundedRectPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.strokeWidth != strokeWidth;
+  }
 }
