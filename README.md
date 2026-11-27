@@ -596,11 +596,12 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 
 统计口径：与上游 `v3.1.4` 源码逐文件比对（排除 `.git`、`build`、`.dart_tool`、`.idea`、`.vscode`、`Pods`、`ephemeral` 与二进制产物）。
 
-#### 本分支新增（24）
+#### 本分支新增（25）
 
 | 文件 | 用途 |
 |---|---|
 | `README-en.md` | 英文说明（本文件的英文版） |
+| `CHANGELOG-en.md` | 英文更新日志（`CHANGELOG.md` 的镜像） |
 | `lib/l10n/app_localizations.dart` | 中英文文案 |
 | `lib/app/controllers/app_locale_controller.dart` | 语言控制器 |
 | `lib/app/device_name.dart` | 设备名归一化与校验 |
@@ -666,4 +667,4 @@ Flutter 会检测已连接设备（或要求选择一台），改动后热重载
 
 - `README.md` 与 `README-en.md` 内的下载表由 `.github/workflows/release.yml` 按一对 `AUTO RELEASE DOWNLOADS` 起止注释（HTML 注释形式，位于「下载」小节）自动写入：**不要手改表格本身**，两个文件都必须保留这对注释，缺一个发布任务会失败
 - 版本徽章、安装说明中的版本号与产物文件名跟随 `pubspec.yaml` 与发布工作流
-- `CHANGELOG.md` 的 `## Unreleased` 段由发布工作流搬进带日期的版本段，并作为 Release 说明发布；因此每条改动写成一行 `- ` 条目
+- 更新日志分中英两份（`CHANGELOG.md` / `CHANGELOG-en.md`），发布工作流把两份的 `## Unreleased` 段都搬进同一日期版本段：中文条目作为 Release 说明正文，英文条目放进可折叠的 English 段；因此每条改动写成一行 `- ` 条目
