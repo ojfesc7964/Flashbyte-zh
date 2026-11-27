@@ -4,13 +4,10 @@ import 'dart:math' as math;
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:fast_file_picker/fast_file_picker.dart';
 import 'package:flashbyte/models/discovered_device.dart';
-import 'package:flashbyte/models/shared_files.dart';
 import 'package:flashbyte/platform/window_state_manager.dart';
 import 'package:flashbyte/services/discovery/device_discovery_service.dart';
 import 'package:flashbyte/services/platform/android_connection_notification_service.dart';
-import 'package:flashbyte/services/sharing/incoming_share_service.dart';
 import 'package:flashbyte/app/app_settings.dart';
 import 'package:flashbyte/app/controllers/app_appearance_controller.dart';
 import 'package:flashbyte/app/controllers/app_locale_controller.dart';
@@ -218,9 +215,8 @@ class _StartupEffectsState extends State<StartupEffects> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(AndroidConnectionNotificationService.instance.initialize());
       unawaited(TrustedDevicesService.instance.load());
-      unawaited(IncomingShareService.instance.init());
       unawaited(
-        cleanupSharedTextFiles(before: _appLaunchTime ?? DateTime.now()),
+        cleanupClipboardTextFiles(before: _appLaunchTime ?? DateTime.now()),
       );
     });
   }
@@ -240,7 +236,6 @@ class _StartPageState extends State<StartPage> {
   List<DiscoveredDevice> _devices = [];
   final _starRotationTarget = ValueNotifier<double>(0);
   StreamSubscription<List<DiscoveredDevice>>? _discoverySub;
-  StreamSubscription<SharedFiles>? _shareSub;
   bool _sharingOpen = false;
   int _previousDeviceCount = 0;
   final _seenDeviceIds = <String>{};
@@ -249,19 +244,6 @@ class _StartPageState extends State<StartPage> {
   void initState() {
     super.initState();
     _initDiscovery();
-    _shareSub = IncomingShareService.instance.sharedFilesStream.listen((
-      batch,
-    ) {
-      if (!mounted || batch.isEmpty || _sharingOpen) {
-        return;
-      }
-      _openSharing(
-        0,
-        initialFiles: batch.files,
-        initialClipboardPaths: batch.clipboardPaths,
-        initialHasEphemeralFiles: batch.hasEphemeralFiles,
-      );
-    });
   }
 
   Future<void> _initDiscovery() async {
@@ -284,7 +266,6 @@ class _StartPageState extends State<StartPage> {
 
   @override
   void dispose() {
-    _shareSub?.cancel();
     _discoverySub?.cancel();
     DeviceDiscoveryService.instance.stopDiscovery();
     super.dispose();
@@ -631,12 +612,7 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
-  void _openSharing(
-    int initialTabIndex, {
-    List<FastFilePickerPath> initialFiles = const [],
-    Set<String> initialClipboardPaths = const {},
-    bool initialHasEphemeralFiles = false,
-  }) {
+  void _openSharing(int initialTabIndex) {
     if (_sharingOpen) {
       return;
     }
@@ -644,12 +620,8 @@ class _StartPageState extends State<StartPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FileSelectionPage(
-          initialTabIndex: initialTabIndex,
-          initialFiles: initialFiles,
-          initialClipboardPaths: initialClipboardPaths,
-          initialHasEphemeralFiles: initialHasEphemeralFiles,
-        ),
+        builder: (context) =>
+            FileSelectionPage(initialTabIndex: initialTabIndex),
       ),
     ).whenComplete(() {
       _sharingOpen = false;
