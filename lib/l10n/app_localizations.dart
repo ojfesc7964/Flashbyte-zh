@@ -186,6 +186,10 @@ class AppLocalizations {
       ? '选择接收方后即可发送。'
       : 'Ready to send after you pick a receiver.';
   String get clearSelectedFiles => isZh ? '清除已选文件' : 'Clear selected files';
+  String get dropFilesHere => isZh ? '将文件拖放到此处' : 'Drop files here';
+  String get releaseToReplaceSelection => isZh
+      ? '松开以替换当前选择。'
+      : 'Release to replace the current selection.';
   String get nearbyReceivers => isZh ? '附近的接收方' : 'Nearby receivers';
   String get tapDeviceToOffer =>
       isZh ? '点击设备以发送所选文件。' : 'Tap a device to offer the selected files.';
@@ -248,6 +252,9 @@ class AppLocalizations {
   String get folderNotFound => isZh ? '文件夹不存在。' : 'Folder not found.';
   String get noFilesInSelectedFolder =>
       isZh ? '所选文件夹中没有文件。' : 'No files found in the selected folder.';
+  String get dropFilesOnly => isZh
+      ? '在此处放置文件。暂不支持文件夹。'
+      : 'Drop files here. Folders are not supported yet.';
 
   // 接收请求页
   String get incomingFiles => isZh ? '接收文件' : 'Incoming files';
