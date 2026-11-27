@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Removed receiving files shared to Flashbyte from other apps (Android share menu and iOS share extension); files can only be picked from inside the app now
+- Removed desktop drag-and-drop sending (Windows, macOS and Linux); the send tab only offers the in-app clipboard, file and folder pickers now
 
 ## 3.1.4 - 2026-11-18
 
