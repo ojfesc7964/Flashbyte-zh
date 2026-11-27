@@ -10,6 +10,10 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
 </p>
 
+<p align="center">
+  <a href="README.md">简体中文</a> · <b>English</b>
+</p>
+
 > This repository is the Chinese-localized fork of [Flashbyte](https://github.com/iamsami101/Flashbyte), based on upstream `v3.1.4`.
 > What this fork is, how it differs from upstream, the file list and the sync workflow are all documented in [About this fork](#about-this-fork) at the end of this file.
 
@@ -667,4 +671,5 @@ Scope: file-by-file comparison against the upstream `v3.1.4` source (excluding `
 
 - The download table in `README.md` and `README-en.md` is written by `.github/workflows/release.yml` between a pair of `AUTO RELEASE DOWNLOADS` HTML comment markers in the Downloads section: **do not edit the table by hand**, and keep both markers in both files — the release job fails when one is missing
 - Version badges and the artifact names in the installation section follow `pubspec.yaml` and the release workflow
+- Each README starts with a language switch line (the current language in bold, the other one linking to its sibling file); do not remove it
 - Changelogs come in two files (`CHANGELOG.md` / `CHANGELOG-en.md`). The release workflow moves the `## Unreleased` sections of both into one dated version section: the Chinese entries become the release body, the English entries go into a collapsible English block; every change is a single `- ` line
