@@ -596,11 +596,12 @@ Every other dependency (`window_manager`, `saf`, `fast_file_picker`, `awesome_no
 
 Scope: file-by-file comparison against the upstream `v3.1.4` source (excluding `.git`, `build`, `.dart_tool`, `.idea`, `.vscode`, `Pods`, `ephemeral` and binary artifacts).
 
-#### Added by this fork (24)
+#### Added by this fork (25)
 
 | File | Purpose |
 |---|---|
 | `README-en.md` | English documentation (this file) |
+| `CHANGELOG-en.md` | English changelog (mirror of `CHANGELOG.md`) |
 | `lib/l10n/app_localizations.dart` | Chinese and English strings |
 | `lib/app/controllers/app_locale_controller.dart` | Language controller |
 | `lib/app/device_name.dart` | Device-name normalization and validation |
@@ -666,4 +667,4 @@ Scope: file-by-file comparison against the upstream `v3.1.4` source (excluding `
 
 - The download table in `README.md` and `README-en.md` is written by `.github/workflows/release.yml` between a pair of `AUTO RELEASE DOWNLOADS` HTML comment markers in the Downloads section: **do not edit the table by hand**, and keep both markers in both files — the release job fails when one is missing
 - Version badges and the artifact names in the installation section follow `pubspec.yaml` and the release workflow
-- `CHANGELOG.md` keeps its entries in the `## Unreleased` section; the release workflow moves them into a dated version section and publishes them as the release notes, so every change is a single `- ` line
+- Changelogs come in two files (`CHANGELOG.md` / `CHANGELOG-en.md`). The release workflow moves the `## Unreleased` sections of both into one dated version section: the Chinese entries become the release body, the English entries go into a collapsible English block; every change is a single `- ` line
