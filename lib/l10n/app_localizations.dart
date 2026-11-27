@@ -255,14 +255,6 @@ class AppLocalizations {
   String get dropFilesOnly => isZh
       ? '在此处放置文件。暂不支持文件夹。'
       : 'Drop files here. Folders are not supported yet.';
-  String sharedFilesReplaced(int count) => count == 1
-      ? (isZh ? '已替换为 1 个分享文件' : 'Replaced with 1 shared file')
-      : (isZh
-            ? '已替换为 $count 个分享文件'
-            : 'Replaced with $count shared files');
-  String get sharedFilesEphemeral => isZh
-      ? '部分分享文件只在本次运行内可读，请尽快发送。'
-      : 'Some shared files are only readable during this run; send them soon.';
 
   // 接收请求页
   String get incomingFiles => isZh ? '接收文件' : 'Incoming files';
@@ -362,15 +354,6 @@ class AppLocalizations {
   String get couldNotReadSelectedFile =>
       isZh ? '无法读取所选文件' : 'Could not read selected file';
   String get disconnectedSnackbar => isZh ? '已断开' : 'Disconnected';
-  String get couldNotSendSharedFiles => isZh
-      ? '连接已断开——无法发送共享文件'
-      : "Connection lost — couldn't send shared files";
-  String sendingSharedFileTo(String name) =>
-      isZh ? '正在向 $name 发送共享文件' : 'Sending shared file to $name';
-  String sendingNSharedFilesTo(int count, String name) => isZh
-      ? '正在向 $name 发送 $count 个共享文件'
-      : 'Sending $count shared files to $name';
-  String get peer => isZh ? '对方' : 'peer';
 
   // 传输组件
   String get statusRequest => isZh ? '请求' : 'request';
