@@ -17,14 +17,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 enum _SessionIssue { connectionLost, transferInterrupted }
 
 class TcpChatPage extends StatefulWidget {
-  final List<FastFilePickerPath> initialFiles;
   final List<Map<String, dynamic>>? initialBatchFiles;
 
-  const TcpChatPage({
-    super.key,
-    this.initialFiles = const [],
-    this.initialBatchFiles,
-  });
+  const TcpChatPage({super.key, this.initialBatchFiles});
 
   @override
   State<TcpChatPage> createState() => _TcpChatPageState();
@@ -46,7 +41,6 @@ class _TcpChatPageState extends State<TcpChatPage> {
   final Map<String, String> _pendingTransferPausedBy = {};
 
   bool isSharingInProgress = false;
-  bool _sentInitialFiles = false;
   bool _disconnectSignalSent = false;
   bool _leavingPage = false;
   bool _suppressNextConnectionIssueAfterCancellation = false;
@@ -314,10 +308,6 @@ class _TcpChatPageState extends State<TcpChatPage> {
       },
     );
     SocketService.instance.replayTransferState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sendInitialFiles();
-    });
   }
 
   @override
@@ -992,20 +982,6 @@ class _TcpChatPageState extends State<TcpChatPage> {
         dismissDirection: DismissDirection.horizontal,
       ),
     );
-  }
-
-  void _sendInitialFiles() {
-    if (_sentInitialFiles || widget.initialFiles.isEmpty) {
-      return;
-    }
-
-    _sentInitialFiles = true;
-    final locations = <String>[];
-    for (final file in widget.initialFiles) {
-      final location = _pickedFileLocation(file);
-      if (location != null) locations.add(location);
-    }
-    _sendLocations(locations);
   }
 
   /// 选择器返回的路径转换成传输层可用的位置：Android 用 SAF 的 content://，其余用文件路径。
