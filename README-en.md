@@ -25,7 +25,7 @@
 - **Lossless, no size limit**: raw bytes, any file type, any size.
 - **No external server**: connections are plain TCP inside your network.
 - **Batches and resume**: offer many files at once, accept or decline them together, pause / resume / cancel the whole batch, and continue interrupted files from the received offset.
-- **Several send sources**: files, folders, and clipboard text (the receiver writes it back to its clipboard).
+- **Several send sources**: files, folders, and clipboard text (the receiver writes it back to its clipboard); on desktop you can also drop files straight into the window.
 - **Trusted devices**: remember a peer by certificate fingerprint and accept its offers automatically.
 - **Chinese and English UI**: follow the system language, or pick 简体中文 / English.
 - **Open source, no data collected**: all code is public.
@@ -495,6 +495,7 @@ Identical to upstream `3.1.4`:
 - Trusted device list (keyed by certificate fingerprint) and "Always accept from…"
 - Device-name reset and receiver name editing
 - Android reads only `content://` URIs through SAF; plain paths are read directly
+- Desktop drag and drop: dropping files into the window queues them for sending (Windows / macOS / Linux)
 - Release workflow skeleton: five build jobs, self-signed Windows artifacts, automatic changelog sectioning, `body_path: release-body.md`
 
 ### Changes in this fork
@@ -576,7 +577,6 @@ Identical to upstream `3.1.4`:
 | Feature | Upstream | This fork |
 |---|---|---|
 | Receiving files shared from other apps | `receive_sharing_intent` (Android share intents plus text-to-`.txt`) | **Removed**: the app no longer appears in the share sheet; sending starts inside the app with a file / folder / clipboard pick |
-| Desktop drag and drop | `desktop_drop` (drop files into the window to queue them) | **Removed**: only the in-app clipboard / file / folder buttons |
 | Random two-word device names | `lib/utils/two_random_words.dart` plus `random_words.dart` | **Removed**: the device model is used by default, and the name can be edited or reset |
 | Dismissible battery-optimization prompt | Launch dialog with "Not now" and "Do not show again" | **Changed** into a launch gate: until notification permission and the exemption are granted, a non-dismissible overlay guides to system settings |
 
@@ -586,7 +586,6 @@ Identical to upstream `3.1.4`:
 
 | Change | Dependency | Reason |
 |---|---|---|
-| Removed | `desktop_drop` | drag-and-drop feature removed |
 | Removed | `receive_sharing_intent` | system-share receiving removed |
 | Removed | `disable_battery_optimization` | replaced by the native `flashbyte/battery_optimization` channel |
 | Removed | `process_run` | replaced by `dart:io` `Process.run` (`file_preview_widget.dart`) |
@@ -663,7 +662,7 @@ Scope: file-by-file comparison against the upstream `v3.1.4` source (excluding `
    - `lib/widgets/background_permission_gate.dart` and the four native channels (documents / battery_optimization / foreground_service / storage)
    - the dual-README download table section and the Inno Setup Chinese language step in `release.yml`
    - `windows/installer/flashbyte.iss`, `install.sh`, `uninstall.sh`, the `.desktop` entry, and the `Base` / `zh-Hans` string files on every platform
-   - the removed features (system-share receiving, desktop drag and drop): skip upstream changes to them
+   - the removed features (system-share receiving): skip upstream changes to them
 4. Bump the `pubspec.yaml` version and record the changes in the `## Unreleased` section of `CHANGELOG.md`
 5. Update "Files that differ" whenever files are added or removed
 
