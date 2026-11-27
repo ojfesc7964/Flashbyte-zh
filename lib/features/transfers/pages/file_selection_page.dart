@@ -10,13 +10,11 @@ import 'package:flashbyte/app/app_settings.dart';
 import 'package:flashbyte/app/device_name.dart';
 import 'package:flashbyte/l10n/app_localizations.dart';
 import 'package:flashbyte/models/discovered_device.dart';
-import 'package:flashbyte/models/shared_files.dart';
 import 'package:flashbyte/services/discovery/device_discovery_service.dart';
 import 'package:flashbyte/services/transfer/socket_service.dart';
 import 'package:flashbyte/services/transfer/clipboard_text_file.dart';
 import 'package:flashbyte/services/security/tls_identity_service.dart';
 import 'package:flashbyte/services/security/trusted_devices_service.dart';
-import 'package:flashbyte/services/sharing/incoming_share_service.dart';
 import 'package:flashbyte/services/platform/android_document_service.dart';
 import 'package:flashbyte/services/platform/android_saf_service.dart';
 import 'package:flashbyte/models/user_facing_error.dart';
@@ -32,21 +30,8 @@ import 'package:loading_indicator_m3e/loading_indicator_m3e.dart';
 
 class FileSelectionPage extends StatefulWidget {
   final int initialTabIndex;
-  final List<FastFilePickerPath> initialFiles;
 
-  /// 由分享文本/链接生成的文件，发送时按粘贴板处理。
-  final Set<String> initialClipboardPaths;
-
-  /// 首次分享的文件只有临时读权限：进入页面时也给出提示。
-  final bool initialHasEphemeralFiles;
-
-  const FileSelectionPage({
-    super.key,
-    this.initialTabIndex = 0,
-    this.initialFiles = const [],
-    this.initialClipboardPaths = const {},
-    this.initialHasEphemeralFiles = false,
-  });
+  const FileSelectionPage({super.key, this.initialTabIndex = 0});
 
   @override
   State<FileSelectionPage> createState() => _FileSelectionPageState();
@@ -76,8 +61,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
   // 选择列表里来自粘贴板的临时文件路径；发送时据此标记接收端写回粘贴板。
   final Set<String> _clipboardFilePaths = {};
 
-  // 分享到达时页面正忙（选择器/确认弹窗）先存下，忙完再替换。
-  SharedFiles? _pendingSharedBatch;
   late final TabController _tabController;
   late final AnimationController _discoveryRefreshController;
 
@@ -107,7 +90,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
   StreamSubscription? _socketSubscription;
   StreamSubscription<List<DiscoveredDevice>>? _discoverySubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
-  StreamSubscription<SharedFiles>? _sharedFilesSubscription;
   Timer? _networkRefreshTimer;
   Timer? _networkGraceTimer;
   int _serverRestartGeneration = 0;
@@ -119,10 +101,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
   void initState() {
     super.initState();
     selectedTabIndex = widget.initialTabIndex;
-    selectedFiles = List.of(widget.initialFiles);
-    _clipboardFilePaths
-      ..clear()
-      ..addAll(widget.initialClipboardPaths);
     _tabController = TabController(
       length: 2,
       vsync: this,
@@ -130,16 +108,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
     );
     _tabController.addListener(_handleTabChanged);
     _deviceNameFocusNode.addListener(_handleDeviceNameFocusChanged);
-    _sharedFilesSubscription = IncomingShareService.instance.sharedFilesStream
-        .listen(_applySharedFiles);
-    if (widget.initialHasEphemeralFiles) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showScaffoldSnackbar(
-          AppLocalizations.of(context).sharedFilesEphemeral,
-        );
-      });
-    }
     _discoveryRefreshController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 520),
@@ -183,7 +151,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
     _socketSubscription?.cancel();
     _discoverySubscription?.cancel();
     _connectivitySubscription?.cancel();
-    _sharedFilesSubscription?.cancel();
     _networkRefreshTimer?.cancel();
     _networkGraceTimer?.cancel();
     _deviceNameFocusNode.removeListener(_handleDeviceNameFocusChanged);
@@ -418,59 +385,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
     }
   }
 
-  /// 分享进来的内容替换当前选择，与应用内“选择文件/文件夹”保持一致。
-  void _applySharedFiles(SharedFiles batch) {
-    if (!mounted || batch.isEmpty) {
-      return;
-    }
-
-    // 会话页正在打开但还没接管时，把这一次分享交给它，避免切换瞬间丢失。
-    if (chatOpened) {
-      if (!IncomingShareService.instance.sessionActive) {
-        IncomingShareService.instance.deferForSession(batch);
-      }
-      return;
-    }
-
-    // 选择器或确认弹窗还开着时先存下，关闭后再替换，避免在弹窗背后改列表。
-    if (_outgoingOfferOpen || _incomingOfferOpen || _pickingTarget != null) {
-      _pendingSharedBatch = batch;
-      return;
-    }
-
-    _applySharedBatchNow(batch);
-  }
-
-  void _applySharedBatchNow(SharedFiles batch) {
-    final l10n = AppLocalizations.of(context);
-    setState(() {
-      selectedFiles = List.of(batch.files);
-      _clipboardFilePaths
-        ..clear()
-        ..addAll(batch.clipboardPaths);
-      selectedTabIndex = 0;
-      if (_tabController.index != 0) {
-        _tabController.index = 0;
-      }
-    });
-    IncomingShareService.instance.clearDeferredForSession();
-    showScaffoldSnackbar(
-      batch.hasEphemeralFiles
-          ? l10n.sharedFilesEphemeral
-          : l10n.sharedFilesReplaced(batch.files.length),
-    );
-  }
-
-  /// 页面忙完后补上暂存的分享内容；仍处于会话/弹窗状态时继续等待。
-  void _applyPendingSharedBatch() {
-    final pending = _pendingSharedBatch;
-    if (pending == null) {
-      return;
-    }
-    _pendingSharedBatch = null;
-    _applySharedFiles(pending);
-  }
-
   Future<void> _pickFiles() async {
     setState(() {
       _pickingTarget = _PickTarget.files;
@@ -493,7 +407,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
         setState(() {
           _pickingTarget = null;
         });
-        _applyPendingSharedBatch();
       }
     }
   }
@@ -593,7 +506,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
         setState(() {
           _pickingTarget = null;
         });
-        _applyPendingSharedBatch();
       }
     }
   }
@@ -616,7 +528,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
         ..clear()
         ..add(file.path);
     });
-    _applyPendingSharedBatch();
   }
 
   void _handleDroppedFiles(DropDoneDetails details) {
@@ -1079,7 +990,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
       if (!mounted) return;
       _openChatIfNeeded(initialFiles: const [], initialBatchFiles: files);
       _incomingOfferOpen = false;
-      _applyPendingSharedBatch();
       return;
     }
 
@@ -1119,7 +1029,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
           } else {
             unawaited(_restartServer());
           }
-          _applyPendingSharedBatch();
         });
   }
 
@@ -1156,7 +1065,6 @@ class _FileSelectionPageState extends State<FileSelectionPage>
           } else {
             await _restartServer();
           }
-          _applyPendingSharedBatch();
         });
   }
 
@@ -1251,16 +1159,10 @@ class _FileSelectionPageState extends State<FileSelectionPage>
       ),
     ).then((_) async {
       if (!mounted) return;
-      IncomingShareService.instance.sessionActive = false;
       setState(() {
         chatOpened = false;
         isConnectingToSender = false;
       });
-      final deferred = IncomingShareService.instance.takeDeferredForSession();
-      if (deferred != null) {
-        _pendingSharedBatch = deferred;
-      }
-      _applyPendingSharedBatch();
       await _restartServer();
     });
   }
